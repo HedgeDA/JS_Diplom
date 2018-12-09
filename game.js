@@ -61,8 +61,8 @@ class Actor {
             return false;
         }
 
-        return this.left <= actor.right && this.right >= actor.left &&
-            this.top <= actor.bottom && this.bottom >= actor.top;
+        return this.left < actor.right && this.right > actor.left &&
+            this.top < actor.bottom && this.bottom > actor.top;
     }
 }
 
@@ -73,8 +73,9 @@ class Level {
 
         this.player = actors.find(actor => actor.type === 'player');
 
-        this.height = grid.length;
-        this.width = Math.max.apply(null, grid.map(line => line.length));
+        this.height = Math.max(0, grid.length);
+
+        this.width = Math.max(0, Math.max.apply(Math, grid.map(line => line.length)));
 
         this.status = null;
         this.finishDelay = 1;
@@ -93,7 +94,7 @@ class Level {
             if (actor.isIntersect(movingActor)) return actor;
         }
 
-        return undefined;
+        return;
     }
 
     obstacleAt(direction, size) {
@@ -119,7 +120,7 @@ class Level {
             }
         }
 
-        return undefined;
+        return;
     }
 
     removeActor(deletingActor) {
@@ -148,28 +149,26 @@ class Level {
 }
 
 class LevelParser {
-    constructor(actorsDict) {
+    constructor(actorsDict = {}) {
         this.actorsDict = actorsDict;
     }
 
     actorFromSymbol(symbol) {
-        return this.actorsDict[symbol];
+        return symbol === undefined ? undefined : this.actorsDict[symbol];
     }
 
     obstacleFromSymbol(symbol) {
         switch (symbol) {
             case 'x': return 'wall';
             case '!': return 'lava';
-            default: return undefined
+            default: return
         }
     }
 
     createGrid(plan) {
-        let grid = [];
-
-        plan.forEach(item => grid.push(item.split('').map(symbol => this.obstacleFromSymbol(symbol))));
-
-        return grid;
+        return plan.map(
+            item => item.split('').map(symbol => this.obstacleFromSymbol(symbol))
+        );
     }
 
     createActors(plan) {
@@ -177,8 +176,10 @@ class LevelParser {
 
         plan.forEach((item, y) => {
             item.split('').forEach((symbol, x) => {
-                if (this.actorsDict[symbol] !== undefined) {
-                    result.push(new this.actorsDict[symbol](new Vector(x, y)));
+                if (typeof this.actorsDict[symbol] === 'function') {
+                    let actor = new this.actorsDict[symbol](new Vector(x, y));
+
+                    if (actor instanceof Actor) result.push(actor);
                 }
             })
         });
