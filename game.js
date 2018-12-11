@@ -75,7 +75,7 @@ class Level {
 
         this.height = Math.max(0, grid.length);
 
-        this.width = Math.max(0, Math.max.apply(Math, grid.map(line => line.length)));
+        this.width = Math.max(0, Math.max(...grid.map(line => line.length)));
 
         this.status = null;
         this.finishDelay = 1;
@@ -154,7 +154,11 @@ class LevelParser {
     }
 
     actorFromSymbol(symbol) {
-        return symbol === undefined ? undefined : this.actorsDict[symbol];
+        if (symbol === undefined) {
+            return undefined;
+        } else {
+            return this.actorsDict[symbol];
+        }
     }
 
     obstacleFromSymbol(symbol) {
@@ -179,7 +183,9 @@ class LevelParser {
                 if (typeof this.actorsDict[symbol] === 'function') {
                     let actor = new this.actorsDict[symbol](new Vector(x, y));
 
-                    if (actor instanceof Actor) result.push(actor);
+                    if (actor instanceof Actor) {
+                        result.push(actor);
+                    }
                 }
             })
         });
